@@ -31,6 +31,8 @@ if __name__ == '__main__':
     for file in file_per_agent:
         read_plan = []
         time = 0
+        line_number = 0
+        append_bool = True
         for line in file:
             if "Cost:" not in line:
                 duration = line.split("(")[0].strip()
@@ -40,7 +42,16 @@ if __name__ == '__main__':
                 read_plan.append([duration, name, cost, float(time)])
                 if "_start" in name:
                     time = time + float(duration)
-        read_plans.append(read_plan)
+            else:
+                if line_number == 0:
+                    append_bool = False
+                    agent_number = agent_number - 1
+                    break
+
+            line_number = line_number + 1
+
+        if append_bool:
+            read_plans.append(read_plan)
 
     for a_file in file_per_agent:
         a_file.close()
