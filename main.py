@@ -2,6 +2,20 @@ import os
 import fnmatch
 
 
+def takeTime(elem):
+    return elem[2][3]
+
+
+def reinitialiseInternalCLock(plan, agent_counter, tick):
+
+    if agent_counter < (len(plan) - 1):
+        extra_time = tick - plan[agent_counter][3]
+
+        if extra_time != 0:
+            for acti in plan[agent_counter + 1:]:
+                acti[3] = acti[3] + extra_time
+
+
 if __name__ == '__main__':
 
     dir_path = '/home/javier/Desktop/planners/outPreprocess/'
@@ -36,12 +50,26 @@ if __name__ == '__main__':
         for line in file:
             if "Cost:" not in line:
                 duration = line.split("(")[0].strip()
+
+                # extract constraints
+                constraints_list_num = []
+                if "no_constraints" in line:
+                    constraints_list = []
+                    line = line.split("no_constraints")[0]
+                else:
+                    constraints = (line.split("(")[2:][0]).split(")")[0]
+                    constraints_list_aux = constraints.split("|")
+                    constraints_list = [con.split(" ") for con in constraints_list_aux]
+                    for con_list in constraints_list:
+                        constraints_list_num.append([int(con) for con in con_list])
+
                 line = line.split("(")[1:][0]
                 name = line.split(")")[0]
                 cost = line.split(")")[1].strip()
-                read_plan.append([duration, name, cost, float(time)])
+                read_plan.append([duration, name, cost, float(time), constraints_list_num])
                 if "_start" in name:
                     time = time + float(duration)
+
             else:
                 if line_number == 0:
                     append_bool = False
@@ -66,6 +94,7 @@ if __name__ == '__main__':
 
     # we will only finish this when all plans have finished
     iterations = 0
+    current_constraints = {}
     while not all_plans_finished:
         agent_checked = 0
         candidates = [None] * agent_number
@@ -82,37 +111,75 @@ if __name__ == '__main__':
 
             agent_checked = agent_checked + 1
 
-        # get the candidate with the minimum start time
-        action_to_include = None
-        for action in candidates:
-            if action is not None:
-                if action_to_include is None:
-                    action_to_include = action
-                else:
-                    if action_to_include[2][3] > action[2][3]:
+        added_action = False
+        while not added_action:
+
+            all_none = True
+            for act in candidates:
+                if act is not None:
+                    all_none = False
+            if all_none:
+                tick = tick + 0.01
+                break
+
+            # get the candidate with the minimum start time
+            action_to_include = None
+            for action in candidates:
+                if action is not None:
+                    if action_to_include is None:
                         action_to_include = action
+                    else:
+                        if action_to_include[2][3] > action[2][3]:
+                            action_to_include = action
 
-        # include an action
-        if action_to_include is not None:
-            final_plan.append(action_to_include)
-            agent_counter[action_to_include[1]] = action_to_include[0] + 1
-            agent_tick[action_to_include[1]] = action_to_include[2][3]
+            if action_to_include is not None:
+                valid_candidate = True
 
-            if agent_counter[action_to_include[1]] >= len(read_plans[action_to_include[1]]):
-                agent_plan_finished[action_to_include[1]] = True
-                all_plans_finished = True
-                for boolean_finished in agent_plan_finished:
-                    if not boolean_finished:
-                        all_plans_finished = False
-                        break
-        else:
-            tick = tick + 0.01
+                # check if the chosen candidate can be added by its constraints
+                if action_to_include[2][4]:
+                    for can_const in action_to_include[2][4]:
+                        if valid_candidate:
+                            if can_const[2] == -1:
+                                continue
+                            for cur_const, cur_const_value in current_constraints.items():
+                                # if the affected var is the same and the value is not, candidate has to wait
+                                if valid_candidate and can_const[1] == cur_const and can_const[2] != cur_const_value:
+                                    valid_candidate = False
+
+                if valid_candidate:
+                    added_action = True
+                    # apply candidate constraints to current
+                    for can_const in action_to_include[2][4]:
+                        if can_const[0] == 1:
+                            current_constraints[can_const[1]] = can_const[3]
+                    # include an action
+                    reinitialiseInternalCLock(read_plans[action_to_include[1]], agent_counter[action_to_include[1]]
+                                              , tick)
+                    final_plan.append(action_to_include)
+                    agent_counter[action_to_include[1]] = action_to_include[0] + 1
+                    # agent_tick[action_to_include[1]] = action_to_include[2][3]
+                    agent_tick[action_to_include[1]] = tick
+                    action_to_include[2][3] = agent_tick[action_to_include[1]]
+
+                    if agent_counter[action_to_include[1]] >= len(read_plans[action_to_include[1]]):
+                        agent_plan_finished[action_to_include[1]] = True
+                        all_plans_finished = True
+                        for boolean_finished in agent_plan_finished:
+                            if not boolean_finished:
+                                all_plans_finished = False
+                                break
+                else:
+                    candidates.remove(action_to_include)
+
+            else:
+                tick = tick + 0.01
 
         iterations = iterations + 1
 
     # print only start actions in final plan
     plan_cost = 0
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
+    final_plan.sort(key=takeTime)
     for action in final_plan:
         if "_start" in action[2][1]:
             action_name = action[2][1].split("_start")[0] + action[2][1].split("_start")[1]
@@ -125,8 +192,3 @@ if __name__ == '__main__':
     final_plan_file.write("Cost: " + str(plan_cost) + "\n")
     final_plan_file.close()
     print("end")
-
-
-
-
-
