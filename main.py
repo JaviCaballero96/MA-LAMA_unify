@@ -18,7 +18,7 @@ def reinitialiseInternalCLock(plan, agent_counter, tick):
 
 if __name__ == '__main__':
 
-    dir_path = '/home/javier/Desktop/planners/outPreprocess/'
+    dir_path = os.getcwd() + "/"
     count = -1
     agent_number = 0
     filename_per_agent = []
@@ -172,7 +172,7 @@ if __name__ == '__main__':
                     candidates.remove(action_to_include)
 
             else:
-                tick = tick + 0.01
+                tick = tick + 0.001
 
         iterations = iterations + 1
 
