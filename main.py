@@ -119,7 +119,7 @@ if __name__ == '__main__':
                 if act is not None:
                     all_none = False
             if all_none:
-                tick = tick + 0.01
+                tick = tick + 0.001
                 break
 
             # get the candidate with the minimum start time
@@ -184,8 +184,9 @@ if __name__ == '__main__':
         if "_start" in action[2][1]:
             action_name = action[2][1].split("_start")[0] + action[2][1].split("_start")[1]
             action_init = action[2][3]
+            action_duration = float(action[2][0])
             plan_cost = plan_cost + float(action[2][2])
-            final_plan_file.write("{:.3f}".format(action_init) + " " + str(action_name) + "\n")
+            final_plan_file.write("{:.3f}".format(action_init) + " " + "{:.3f}".format(action_duration) + " " + str(action_name) + "\n")
         else:
             plan_cost = plan_cost + float(action[2][2])
 
