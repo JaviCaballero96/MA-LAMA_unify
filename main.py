@@ -186,7 +186,7 @@ if __name__ == '__main__':
             action_init = action[2][3]
             action_duration = float(action[2][0])
             plan_cost = plan_cost + float(action[2][2])
-            final_plan_file.write("{:.3f}".format(action_init) + " " + "{:.3f}".format(action_duration) + " " + str(action_name) + "\n")
+            final_plan_file.write("{:.3f}".format(action_init) + " " + "({:.3f})".format(action_duration) + " " + str(action_name) + "\n")
         else:
             plan_cost = plan_cost + float(action[2][2])
 
