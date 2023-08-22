@@ -7,7 +7,6 @@ def takeTime(elem):
 
 
 def reinitialiseInternalCLock(plan, agent_counter, tick):
-
     if agent_counter < (len(plan) - 1):
         extra_time = tick - plan[agent_counter][3]
 
@@ -66,9 +65,12 @@ if __name__ == '__main__':
                 line = line.split("(")[1:][0]
                 name = line.split(")")[0]
                 cost = line.split(")")[1].strip()
+                if "_end" not in name:
+                    if duration == "0":
+                        duration = "0.001"
                 read_plan.append([duration, name, cost, float(time), constraints_list_num])
-                if "_start" in name:
-                    time = time + float(duration)
+
+                time = time + float(duration)
 
             else:
                 if line_number == 0:
@@ -186,9 +188,17 @@ if __name__ == '__main__':
             action_init = action[2][3]
             action_duration = float(action[2][0])
             plan_cost = plan_cost + float(action[2][2])
-            final_plan_file.write("{:.3f}".format(action_init) + " " + "({:.3f})".format(action_duration) + " " + str(action_name) + "\n")
-        else:
+            final_plan_file.write(
+                "{:.3f}".format(action_init) + " " + "({:.3f})".format(action_duration) + " " + str(action_name) + "\n")
+        elif "_end" in action[2][1]:
             plan_cost = plan_cost + float(action[2][2])
+        else:
+            action_name = action[2][1]
+            action_init = action[2][3]
+            action_duration = float(action[2][0])
+            plan_cost = plan_cost + float(action[2][2])
+            final_plan_file.write(
+                "{:.3f}".format(action_init) + " " + "({:.3f})".format(action_duration) + " " + str(action_name) + "\n")
 
     final_plan_file.write("Cost: " + str(plan_cost) + "\n")
     final_plan_file.close()
