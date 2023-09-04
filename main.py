@@ -60,6 +60,8 @@ if __name__ == '__main__':
                     constraints_list_aux = constraints.split("|")
                     constraints_list = [con.split(" ") for con in constraints_list_aux]
                     for con_list in constraints_list:
+                        while "" in con_list:
+                            con_list.remove("")
                         constraints_list_num.append([int(con) for con in con_list])
 
                 line = line.split("(")[1:][0]
