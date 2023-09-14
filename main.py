@@ -72,7 +72,8 @@ if __name__ == '__main__':
                         duration = "0.001"
                 read_plan.append([duration, name, cost, float(time), constraints_list_num])
 
-                time = time + float(duration)
+                if "_end" not in name:
+                    time = time + float(duration)
 
             else:
                 if line_number == 0:
