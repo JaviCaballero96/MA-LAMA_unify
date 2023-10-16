@@ -15,29 +15,32 @@ def reinitialiseInternalCLock(plan, agent_counter, tick):
                 acti[3] = acti[3] + extra_time
 
 
-if __name__ == '__main__':
-
-    dir_path = os.getcwd() + "/"
+def const_fase_create_plan():
+    local_path = os.getcwd() + "/step_0/"
     count = -1
     agent_number = 0
     filename_per_agent = []
     file_per_agent = []
 
+    # Check file from step0
+    if not os.path.exists(local_path):
+        return []
+
     # Count agents number and get the last solution found for each
     while count != 0:
         match = 'output_preproagent' + str(agent_number) + '.*'
-        count = len(fnmatch.filter(os.listdir(dir_path), match))
+        count = len(fnmatch.filter(os.listdir(local_path), match))
         if count != 0:
-            files_per_agent = fnmatch.filter(os.listdir(dir_path), match)
+            files_per_agent = fnmatch.filter(os.listdir(local_path), match)
             files_per_agent.sort(reverse=True)
             filename_per_agent.append(files_per_agent[0])
-            file_per_agent.append(open(dir_path + filename_per_agent[agent_number], "r"))
+            file_per_agent.append(open(local_path + filename_per_agent[agent_number], "r"))
             print("Agent " + str(agent_number) + " --> " + filename_per_agent[agent_number])
         agent_number = agent_number + 1
         # print(match + " -> Agent " + str(agent_number) + ": " + str(count))
 
     agent_number = agent_number - 1
-    print(str(agent_number) + " agents detected")
+    print(str(agent_number) + " agents detected in the step_0")
 
     # read all agent plans
     read_plans = []
@@ -50,27 +53,13 @@ if __name__ == '__main__':
             if "Cost:" not in line:
                 duration = line.split("(")[0].strip()
 
-                # extract constraints
-                constraints_list_num = []
-                if "no_constraints" in line:
-                    constraints_list = []
-                    line = line.split("no_constraints")[0]
-                else:
-                    constraints = (line.split("(")[2:][0]).split(")")[0]
-                    constraints_list_aux = constraints.split("|")
-                    constraints_list = [con.split(" ") for con in constraints_list_aux]
-                    for con_list in constraints_list:
-                        while "" in con_list:
-                            con_list.remove("")
-                        constraints_list_num.append([int(con) for con in con_list])
-
                 line = line.split("(")[1:][0]
                 name = line.split(")")[0]
                 cost = line.split(")")[1].strip()
                 if "_end" not in name:
                     if duration == "0":
                         duration = "0.001"
-                read_plan.append([duration, name, cost, float(time), constraints_list_num])
+                read_plan.append([duration, name, cost, float(time)])
 
                 if "_end" not in name:
                     time = time + float(duration)
@@ -90,7 +79,7 @@ if __name__ == '__main__':
         a_file.close()
 
     # Create final plan
-    final_plan = []
+    local_plan = []
     all_plans_finished = False
     agent_plan_finished = [False] * agent_number
     agent_counter = [0] * agent_number
@@ -140,27 +129,12 @@ if __name__ == '__main__':
             if action_to_include is not None:
                 valid_candidate = True
 
-                # check if the chosen candidate can be added by its constraints
-                if action_to_include[2][4]:
-                    for can_const in action_to_include[2][4]:
-                        if valid_candidate:
-                            if can_const[2] == -1:
-                                continue
-                            for cur_const, cur_const_value in current_constraints.items():
-                                # if the affected var is the same and the value is not, candidate has to wait
-                                if valid_candidate and can_const[1] == cur_const and can_const[2] != cur_const_value:
-                                    valid_candidate = False
-
                 if valid_candidate:
                     added_action = True
-                    # apply candidate constraints to current
-                    for can_const in action_to_include[2][4]:
-                        if can_const[0] == 1:
-                            current_constraints[can_const[1]] = can_const[3]
                     # include an action
-                    reinitialiseInternalCLock(read_plans[action_to_include[1]], agent_counter[action_to_include[1]]
-                                              , tick)
-                    final_plan.append(action_to_include)
+                    reinitialiseInternalCLock(read_plans[action_to_include[1]], agent_counter[action_to_include[1]],
+                                              tick)
+                    local_plan.append(action_to_include)
                     agent_counter[action_to_include[1]] = action_to_include[0] + 1
                     # agent_tick[action_to_include[1]] = action_to_include[2][3]
                     agent_tick[action_to_include[1]] = tick
@@ -181,7 +155,159 @@ if __name__ == '__main__':
 
         iterations = iterations + 1
 
+    return local_plan
+
+
+def coop_fase_create_plan(curr_time_followup):
+    # Create final plan
+    local_plan = []
+    local_path = os.getcwd() + "/"
+
+    match = 'step_*'
+    step_number = len(fnmatch.filter(os.listdir(local_path), match))
+
+    match = '*general*'
+    if len(fnmatch.filter(os.listdir(local_path + "step_" + str(step_number - 1) + "/"), match)) > 0:
+        step_number = step_number - 1
+
+    init_const = 0
+    if os.path.exists(local_path + "step_0"):
+        step_number = step_number - 1
+        init_const = 1
+
+    print(str(step_number) + " coop detected in root directory")
+
+    for dir_num in range(init_const, step_number + 1):
+        print("Analyzing dir step_" + str(dir_num))
+        coop_dir_path = local_path + "step_" + str(dir_num) + "/"
+
+        agent_filenames_ordered = []
+        file_per_agent_ordered = []
+        match_found = True
+        match_index = 0
+        while match_found:
+            match = str(match_index) + '_output*.sas'
+            match_found = len(fnmatch.filter(os.listdir(coop_dir_path), match)) == 1
+            if match_found:
+                agent_filenames_ordered.append(fnmatch.filter(os.listdir(coop_dir_path), match)[0])
+                # file_per_agent_ordered.append(open(coop_dir_path + agent_filenames_ordered[match_index], "r"))
+
+                match_index = match_index + 1
+        file_per_agent_ordered = []
+        for agent_filename in agent_filenames_ordered:
+            coop_dir_file = coop_dir_path + "output_preproagent" + \
+                            ((agent_filename.split("_")[-1]).split(".sas")[0]).split("agent")[-1] + ".1"
+            file_per_agent_ordered.append(open(coop_dir_file, "r"))
+        for file in agent_filenames_ordered:
+            print("Current file: " + file + " agent number " + file.split("_")[0] + " is " +
+                  (file.split("_")[-1]).split(".sas")[0] + " " +
+                  ((file.split("_")[-1]).split(".sas")[0]).split("agent")[-1])
+
+        # Read the file and directly apply it to the plan since it is already ordered
+        # curr time is given in the function arguments
+        time = curr_time_followup
+        f_index = 0
+        for a_file in file_per_agent_ordered:
+            local_file_plan = []
+            line_number = 0
+            for line in a_file:
+                if "Cost:" not in line:
+                    duration = line.split("(")[0].strip()
+
+                    line = line.split("(")[1:][0]
+                    name = line.split(")")[0]
+                    cost = line.split(")")[1].strip()
+                    if "_end" not in name:
+                        if duration == "0":
+                            duration = "0.001"
+                    local_file_plan.append([duration, name, cost, float(time)])
+
+                    if "_end" not in name:
+                        time = time + float(duration)
+
+                else:
+                    if line_number == 0:
+                        break
+
+                line_number = line_number + 1
+
+            act_index = 0
+            for lf_action in local_file_plan:
+                local_plan.append(
+                    [act_index,
+                     int(((agent_filenames_ordered[f_index].split("_")[-1]).split(".sas")[0]).split("agent")[-1]),
+                     lf_action])
+                act_index = act_index + 1
+
+            time = local_plan[-1][2][3]
+            f_index = f_index + 1
+
+    return local_plan
+
+
+def general_fase_create_plan(curr_time_followup):
+    # Create final plan
+    local_plan = []
+    local_path = os.getcwd() + "/"
+
+    match = 'step_*'
+    step_number = len(fnmatch.filter(os.listdir(local_path), match))
+
+    match = 'output_preprogeneral.1'
+    if len(fnmatch.filter(os.listdir(local_path + "step_" + str(step_number - 1) + "/"), match)) <= 0:
+        return []
+
+    print("General goals plan found!")
+
+    time = curr_time_followup
+    g_file = open(local_path + "step_" + str(step_number - 1) + "/output_preprogeneral.1", "r")
+    local_file_plan = []
+    line_number = 0
+    for line in g_file:
+        if "Cost:" not in line:
+            duration = line.split("(")[0].strip()
+
+            line = line.split("(")[1:][0]
+            name = line.split(")")[0]
+            cost = line.split(")")[1].strip()
+            if "_end" not in name:
+                if duration == "0":
+                    duration = "0.001"
+            local_file_plan.append([duration, name, cost, float(time)])
+
+            if "_end" not in name:
+                time = time + float(duration)
+
+        else:
+            if line_number == 0:
+                break
+
+        line_number = line_number + 1
+
+    act_index = 0
+    for lf_action in local_file_plan:
+        local_plan.append([act_index, -1, lf_action])
+        act_index = act_index + 1
+
+    return local_plan
+
+
+if __name__ == '__main__':
+
+    curr_time = 0
+    plan_step_const = const_fase_create_plan()
+    if plan_step_const:
+        curr_time = float(plan_step_const[-1][2][3]) + float(plan_step_const[-1][2][0])
+
+    plan_step_coop = coop_fase_create_plan(curr_time)
+    if plan_step_coop:
+        curr_time = float(plan_step_coop[-1][2][3]) + float(plan_step_coop[-1][2][0])
+
+    plan_step_general = general_fase_create_plan(curr_time)
     # print only start actions in final plan
+
+    final_plan = plan_step_const + plan_step_coop + plan_step_general
+    dir_path = os.getcwd() + "/"
     plan_cost = 0
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
     final_plan.sort(key=takeTime)
