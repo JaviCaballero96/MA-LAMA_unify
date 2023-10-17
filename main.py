@@ -194,10 +194,12 @@ def coop_fase_create_plan(curr_time_followup):
 
                 match_index = match_index + 1
         file_per_agent_ordered = []
+        f_index = 0
         for agent_filename in agent_filenames_ordered:
-            coop_dir_file = coop_dir_path + "output_preproagent" + \
+            coop_dir_file = coop_dir_path + str(f_index) + "_output_preproagent" + \
                             ((agent_filename.split("_")[-1]).split(".sas")[0]).split("agent")[-1] + ".1"
             file_per_agent_ordered.append(open(coop_dir_file, "r"))
+            f_index = f_index + 1
         for file in agent_filenames_ordered:
             print("Current file: " + file + " agent number " + file.split("_")[0] + " is " +
                   (file.split("_")[-1]).split(".sas")[0] + " " +
