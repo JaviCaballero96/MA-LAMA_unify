@@ -51,7 +51,9 @@ def const_fase_create_plan():
         append_bool = True
         for line in file:
             if "Cost:" not in line:
-                duration = line.split("(")[0].strip()
+                duration = line.split("(")[0]
+                action_init_time = duration.split(" ")[1].strip()
+                duration = duration.split(" ")[0].strip()
 
                 line = line.split("(")[1:][0]
                 name = line.split(")")[0]
@@ -59,10 +61,10 @@ def const_fase_create_plan():
                 if "_end" not in name:
                     if duration == "0":
                         duration = "0.001"
-                read_plan.append([duration, name, cost, float(time)])
+                read_plan.append([duration, name, cost, float(action_init_time)])
 
                 if "_end" not in name:
-                    time = time + float(duration)
+                    time = float(action_init_time)
 
             else:
                 if line_number == 0:
@@ -136,7 +138,7 @@ def const_fase_create_plan():
                                               tick)
                     local_plan.append(action_to_include)
                     agent_counter[action_to_include[1]] = action_to_include[0] + 1
-                    # agent_tick[action_to_include[1]] = action_to_include[2][3]
+                    agent_tick[action_to_include[1]] = action_to_include[2][3]
                     agent_tick[action_to_include[1]] = tick
                     action_to_include[2][3] = agent_tick[action_to_include[1]]
 
@@ -214,7 +216,9 @@ def coop_fase_create_plan(curr_time_followup):
             line_number = 0
             for line in a_file:
                 if "Cost:" not in line:
-                    duration = line.split("(")[0].strip()
+                    duration = line.split("(")[0]
+                    action_init_time = duration.split(" ")[1].strip()
+                    duration = duration.split(" ")[0].strip()
 
                     line = line.split("(")[1:][0]
                     name = line.split(")")[0]
@@ -222,10 +226,10 @@ def coop_fase_create_plan(curr_time_followup):
                     if "_end" not in name:
                         if duration == "0":
                             duration = "0.001"
-                    local_file_plan.append([duration, name, cost, float(time)])
+                    local_file_plan.append([duration, name, cost, float(action_init_time)])
 
                     if "_end" not in name:
-                        time = time + float(duration)
+                        time = float(action_init_time)
 
                 else:
                     if line_number == 0:
@@ -267,7 +271,9 @@ def general_fase_create_plan(curr_time_followup):
     line_number = 0
     for line in g_file:
         if "Cost:" not in line:
-            duration = line.split("(")[0].strip()
+            duration = line.split("(")[0]
+            action_init_time = duration.split(" ")[1].strip()
+            duration = duration.split(" ")[0].strip()
 
             line = line.split("(")[1:][0]
             name = line.split(")")[0]
@@ -275,10 +281,10 @@ def general_fase_create_plan(curr_time_followup):
             if "_end" not in name:
                 if duration == "0":
                     duration = "0.001"
-            local_file_plan.append([duration, name, cost, float(time)])
+            local_file_plan.append([duration, name, cost, float(action_init_time)])
 
             if "_end" not in name:
-                time = time + float(duration)
+                time = float(action_init_time)
 
         else:
             if line_number == 0:
