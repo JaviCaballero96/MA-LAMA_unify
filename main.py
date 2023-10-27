@@ -209,11 +209,12 @@ def coop_fase_create_plan(curr_time_followup):
 
         # Read the file and directly apply it to the plan since it is already ordered
         # curr time is given in the function arguments
-        time = curr_time_followup
         f_index = 0
         for a_file in file_per_agent_ordered:
             local_file_plan = []
             line_number = 0
+            print("Time init for coop phase " + str(agent_filenames_ordered[f_index]) +
+                  " --> " + str(float(curr_time_followup)))
             for line in a_file:
                 if "Cost:" not in line:
                     duration = line.split("(")[0]
@@ -226,10 +227,10 @@ def coop_fase_create_plan(curr_time_followup):
                     if "_end" not in name:
                         if duration == "0":
                             duration = "0.001"
-                    local_file_plan.append([duration, name, cost, float(action_init_time)])
+                    local_file_plan.append([duration, name, cost, float(curr_time_followup)])
 
                     if "_end" not in name:
-                        time = float(action_init_time)
+                        curr_time_followup = float(duration) + float(curr_time_followup)
 
                 else:
                     if line_number == 0:
@@ -245,7 +246,7 @@ def coop_fase_create_plan(curr_time_followup):
                      lf_action])
                 act_index = act_index + 1
 
-            time = local_plan[-1][2][3]
+            # curr_time_followup = local_plan[-1][2][3]
             f_index = f_index + 1
 
     return local_plan
@@ -265,7 +266,6 @@ def general_fase_create_plan(curr_time_followup):
 
     print("General goals plan found!")
 
-    time = curr_time_followup
     g_file = open(local_path + "step_" + str(step_number - 1) + "/output_preprogeneral.1", "r")
     local_file_plan = []
     line_number = 0
@@ -281,10 +281,10 @@ def general_fase_create_plan(curr_time_followup):
             if "_end" not in name:
                 if duration == "0":
                     duration = "0.001"
-            local_file_plan.append([duration, name, cost, float(action_init_time)])
+            local_file_plan.append([duration, name, cost, float(curr_time_followup)])
 
             if "_end" not in name:
-                time = float(action_init_time)
+                curr_time_followup = float(duration) + float(curr_time_followup)
 
         else:
             if line_number == 0:
@@ -306,12 +306,17 @@ if __name__ == '__main__':
     plan_step_const = const_fase_create_plan()
     if plan_step_const:
         curr_time = float(plan_step_const[-1][2][3]) + float(plan_step_const[-1][2][0])
+        print("End coordination phase time: " + str(curr_time))
 
     plan_step_coop = coop_fase_create_plan(curr_time)
     if plan_step_coop:
         curr_time = float(plan_step_coop[-1][2][3]) + float(plan_step_coop[-1][2][0])
+        print("End cooperation phase time: " + str(curr_time))
 
     plan_step_general = general_fase_create_plan(curr_time)
+    if plan_step_general:
+        curr_time = float(plan_step_coop[-1][2][3]) + float(plan_step_coop[-1][2][0])
+        print("End general phase time: " + str(curr_time))
     # print only start actions in final plan
 
     final_plan = plan_step_const + plan_step_coop + plan_step_general
