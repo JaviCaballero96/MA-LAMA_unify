@@ -50,7 +50,7 @@ def const_fase_create_plan():
         line_number = 0
         append_bool = True
         for line in file:
-            if "Cost:" not in line and "Expanded nodes" not in line:
+            if "Cost:" not in line and "Expanded nodes" not in line and "Search time" not in line:
                 duration = line.split("(")[0]
                 action_init_time = duration.split(" ")[1].strip()
                 duration = duration.split(" ")[0].strip()
@@ -216,7 +216,7 @@ def coop_fase_create_plan(curr_time_followup):
             print("Time init for coop phase " + str(agent_filenames_ordered[f_index]) +
                   " --> " + str(float(curr_time_followup)))
             for line in a_file:
-                if "Cost:" not in line and "Expanded nodes" not in line:
+                if "Cost:" not in line and "Expanded nodes" not in line and "Search time" not in line:
                     duration = line.split("(")[0]
                     action_init_time = duration.split(" ")[1].strip()
                     duration = duration.split(" ")[0].strip()
@@ -270,7 +270,7 @@ def general_fase_create_plan(curr_time_followup):
     local_file_plan = []
     line_number = 0
     for line in g_file:
-        if "Cost:" not in line and "Expanded nodes" not in line:
+        if "Cost:" not in line and "Expanded nodes" not in line and "Search time" not in line:
             duration = line.split("(")[0]
             action_init_time = duration.split(" ")[1].strip()
             duration = duration.split(" ")[0].strip()
@@ -322,6 +322,8 @@ if __name__ == '__main__':
     final_plan = plan_step_const + plan_step_coop + plan_step_general
     dir_path = os.getcwd() + "/"
     plan_cost = 0
+    last_action_init = 0
+    last_action_dur = 0
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
     final_plan.sort(key=takeTime)
     for action in final_plan:
@@ -332,6 +334,8 @@ if __name__ == '__main__':
             plan_cost = plan_cost + float(action[2][2])
             final_plan_file.write(
                 "{:.3f}".format(action_init) + " " + "({:.3f})".format(action_duration) + " " + str(action_name) + "\n")
+            last_action_init = action_init
+            last_action_dur = action_duration
         elif "_end" in action[2][1]:
             plan_cost = plan_cost + float(action[2][2])
         else:
@@ -341,7 +345,10 @@ if __name__ == '__main__':
             plan_cost = plan_cost + float(action[2][2])
             final_plan_file.write(
                 "{:.3f}".format(action_init) + " " + "({:.3f})".format(action_duration) + " " + str(action_name) + "\n")
+            last_action_init = action_init
+            last_action_dur = action_duration
 
     final_plan_file.write("Cost: " + str(plan_cost) + "\n")
+    final_plan_file.write("Makespan: " + str(last_action_init + last_action_dur) + "\n")
     final_plan_file.close()
     print("end")
