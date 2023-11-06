@@ -50,7 +50,7 @@ def const_fase_create_plan():
         line_number = 0
         append_bool = True
         for line in file:
-            if "Cost:" not in line:
+            if "Cost:" not in line and "Expanded nodes" not in line:
                 duration = line.split("(")[0]
                 action_init_time = duration.split(" ")[1].strip()
                 duration = duration.split(" ")[0].strip()
@@ -216,7 +216,7 @@ def coop_fase_create_plan(curr_time_followup):
             print("Time init for coop phase " + str(agent_filenames_ordered[f_index]) +
                   " --> " + str(float(curr_time_followup)))
             for line in a_file:
-                if "Cost:" not in line:
+                if "Cost:" not in line and "Expanded nodes" not in line:
                     duration = line.split("(")[0]
                     action_init_time = duration.split(" ")[1].strip()
                     duration = duration.split(" ")[0].strip()
@@ -270,7 +270,7 @@ def general_fase_create_plan(curr_time_followup):
     local_file_plan = []
     line_number = 0
     for line in g_file:
-        if "Cost:" not in line:
+        if "Cost:" not in line and "Expanded nodes" not in line:
             duration = line.split("(")[0]
             action_init_time = duration.split(" ")[1].strip()
             duration = duration.split(" ")[0].strip()
