@@ -29,7 +29,7 @@ def const_fase_create_plan():
 
     # Count agents number and get the last solution found for each
     while count != 0:
-        match = 'output_preproagent' + str(agent_number) + '.*'
+        match = 'output_preproagent' + str(agent_number) + '.p*'
         count = len(fnmatch.filter(os.listdir(local_path), match))
         if count != 0:
             files_per_agent = fnmatch.filter(os.listdir(local_path), match)
