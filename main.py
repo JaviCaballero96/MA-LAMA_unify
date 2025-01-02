@@ -2,11 +2,11 @@ import os
 import fnmatch
 
 
-def takeTime(elem):
+def take_time(elem):
     return elem[2][3]
 
 
-def reinitialiseInternalCLock(plan, agent_counter, tick):
+def reinitialise_internal_clock(plan, agent_counter, tick):
     if agent_counter < (len(plan) - 1):
         extra_time = tick - plan[agent_counter][3]
 
@@ -21,6 +21,7 @@ def const_fase_create_plan():
     agent_number = 0
     filename_per_agent = []
     file_per_agent = []
+    total_time_metric = False
 
     # Check file from step0
     if not os.path.exists(local_path):
@@ -28,7 +29,7 @@ def const_fase_create_plan():
 
     # Count agents number and get the last solution found for each
     while count != 0:
-        match = 'output_preproagent' + str(agent_number) + '.*'
+        match = 'output_preproagent' + str(agent_number) + '.p*'
         count = len(fnmatch.filter(os.listdir(local_path), match))
         if count != 0:
             files_per_agent = fnmatch.filter(os.listdir(local_path), match)
@@ -67,6 +68,10 @@ def const_fase_create_plan():
                     time = float(action_init_time)
 
             else:
+                print(line)
+                print("awdaskdallsakdmal")
+                if "Total-time Cost" in line:
+                    total_time_metric = True
                 if line_number == 0:
                     append_bool = False
                     agent_number = agent_number - 1
@@ -134,7 +139,7 @@ def const_fase_create_plan():
                 if valid_candidate:
                     added_action = True
                     # include an action
-                    reinitialiseInternalCLock(read_plans[action_to_include[1]], agent_counter[action_to_include[1]],
+                    reinitialise_internal_clock(read_plans[action_to_include[1]], agent_counter[action_to_include[1]],
                                               tick)
                     local_plan.append(action_to_include)
                     agent_counter[action_to_include[1]] = action_to_include[0] + 1
@@ -157,7 +162,7 @@ def const_fase_create_plan():
 
         iterations = iterations + 1
 
-    return local_plan
+    return local_plan, total_time_metric
 
 
 def coop_fase_create_plan(curr_time_followup):
@@ -233,6 +238,8 @@ def coop_fase_create_plan(curr_time_followup):
                         curr_time_followup = float(duration) + float(curr_time_followup)
 
                 else:
+                    if "Total-time Cost" in line:
+                        TOTAL_TIME_METRIC = True
                     if line_number == 0:
                         break
 
@@ -303,7 +310,7 @@ def general_fase_create_plan(curr_time_followup):
 if __name__ == '__main__':
 
     curr_time = 0
-    plan_step_const = const_fase_create_plan()
+    plan_step_const, total_time_metric = const_fase_create_plan()
     if plan_step_const:
         curr_time = float(plan_step_const[-1][2][3]) + float(plan_step_const[-1][2][0])
         print("End coordination phase time: " + str(curr_time))
@@ -325,7 +332,7 @@ if __name__ == '__main__':
     last_action_init = 0
     last_action_dur = 0
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
-    final_plan.sort(key=takeTime)
+    final_plan.sort(key=take_time)
     for action in final_plan:
         if "_start" in action[2][1]:
             action_name = action[2][1].split("_start")[0] + action[2][1].split("_start")[1]
@@ -348,7 +355,10 @@ if __name__ == '__main__':
             last_action_init = action_init
             last_action_dur = action_duration
 
-    final_plan_file.write("Cost: " + str(plan_cost) + "\n")
+    if total_time_metric:
+        final_plan_file.write("Cost: " + "{:.3f}".format(action_init + last_action_dur) + "\n")
+    else:
+        final_plan_file.write("Cost: " + str(plan_cost) + "\n")
     final_plan_file.write("Makespan: " + str(last_action_init + last_action_dur) + "\n")
     final_plan_file.close()
     print("end")
