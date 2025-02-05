@@ -331,6 +331,18 @@ if __name__ == '__main__':
     plan_cost = 0
     last_action_init = 0
     last_action_dur = 0
+    # Calculate plan duration and read min_valid_time to calculate max application window for all actions
+    plan_makespan = 0
+    for action in final_plan:
+        plan_makespan = plan_makespan + float(action[2][0])
+    min_valid_time_windows = []
+    f = open("unify_info.txt", "r")
+    lines = [line.rstrip() for line in f]
+    assert(lines[0] == "Unify Data")
+    for window in lines[1:]:
+        min_valid_time_windows.append(float(window))
+    print(min_valid_time_windows)
+
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
     GMV_final_plan_file = open(dir_path + "GMV_final_plan.txt", 'w')
     final_plan.sort(key=take_time)
@@ -342,9 +354,24 @@ if __name__ == '__main__':
             plan_cost = plan_cost + float(action[2][2])
             final_plan_file.write(
                 "{:.3f}".format(action_init) + " " + "({:.3f})".format(action_duration) + " " + str(action_name) + "\n")
-            GMV_final_plan_file.write(
-                str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "{:.3f}".format(action_init) + ", " +
-                "{:.3f}".format(action_duration) + "]" + "\n")
+
+            # Calculate the end time window
+            time_window = min_valid_time_windows[-1]
+            if min_valid_time_windows:
+                for elem in min_valid_time_windows:
+                    if action_init <= elem:
+                        time_window = elem
+                        break
+
+                time_window_value = time_window + action_init - plan_makespan
+
+                GMV_final_plan_file.write(
+                    str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "{:.3f}".format(time_window_value) + ", " +
+                    "{:.3f}".format(action_duration) + "]" + "\n")
+            else:
+                GMV_final_plan_file.write(
+                    str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "{:.3f}".format(action_init) + ", " +
+                    "{:.3f}".format(action_duration) + "]" + "\n")
             last_action_init = action_init
             last_action_dur = action_duration
         elif "_end" in action[2][1]:
