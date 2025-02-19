@@ -336,12 +336,18 @@ if __name__ == '__main__':
     for action in final_plan:
         plan_makespan = plan_makespan + float(action[2][0])
     min_valid_time_windows = []
-    f = open("unify_info.txt", "r")
-    lines = [line.rstrip() for line in f]
-    assert(lines[0] == "Unify Data")
-    for window in lines[1:]:
-        min_valid_time_windows.append(float(window))
-    print(min_valid_time_windows)
+    inf = False
+    try:
+        f = open("unify_info.txt", "r")
+    except:
+        inf = True
+        print("No negative time windows are present")
+    if not inf:
+        lines = [line.rstrip() for line in f]
+        assert(lines[0] == "Unify Data")
+        for window in lines[1:]:
+            min_valid_time_windows.append(float(window))
+        print(min_valid_time_windows)
 
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
     GMV_final_plan_file = open(dir_path + "GMV_final_plan.txt", 'w')
@@ -356,8 +362,9 @@ if __name__ == '__main__':
                 "{:.3f}".format(action_init) + " " + "({:.3f})".format(action_duration) + " " + str(action_name) + "\n")
 
             # Calculate the end time window
-            time_window = min_valid_time_windows[-1]
+
             if min_valid_time_windows:
+                time_window = min_valid_time_windows[-1]
                 for elem in min_valid_time_windows:
                     if action_init <= elem:
                         time_window = elem
@@ -370,7 +377,7 @@ if __name__ == '__main__':
                     "{:.3f}".format(action_duration) + "]" + "\n")
             else:
                 GMV_final_plan_file.write(
-                    str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "{:.3f}".format(action_init) + ", " +
+                    str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "INF" + ", " +
                     "{:.3f}".format(action_duration) + "]" + "\n")
             last_action_init = action_init
             last_action_dur = action_duration
