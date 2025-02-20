@@ -350,7 +350,7 @@ if __name__ == '__main__':
         print(min_valid_time_windows)
 
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
-    GMV_final_plan_file = open(dir_path + "GMV_final_plan.txt", 'w')
+    GMV_final_plan_file = open(dir_path + "final_plan_time.txt", 'w')
     final_plan.sort(key=take_time)
     for action in final_plan:
         if "_start" in action[2][1]:
@@ -377,7 +377,7 @@ if __name__ == '__main__':
                     "{:.3f}".format(action_duration) + "]" + "\n")
             else:
                 GMV_final_plan_file.write(
-                    str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "INF" + ", " +
+                    str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "inf" + ", " +
                     "{:.3f}".format(action_duration) + "]" + "\n")
             last_action_init = action_init
             last_action_dur = action_duration
