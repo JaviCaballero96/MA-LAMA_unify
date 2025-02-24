@@ -69,7 +69,6 @@ def const_fase_create_plan():
 
             else:
                 print(line)
-                print("awdaskdallsakdmal")
                 if "Total-time Cost" in line:
                     total_time_metric = True
                 if line_number == 0:
