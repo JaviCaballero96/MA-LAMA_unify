@@ -333,7 +333,8 @@ if __name__ == '__main__':
     # Calculate plan duration and read min_valid_time to calculate max application window for all actions
     plan_makespan = 0
     for action in final_plan:
-        plan_makespan = plan_makespan + float(action[2][0])
+        if "_start" in action[2][1]:
+            plan_makespan = plan_makespan + float(action[2][0])
     min_valid_time_windows = []
     inf = False
     try:
@@ -351,6 +352,7 @@ if __name__ == '__main__':
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
     GMV_final_plan_file = open(dir_path + "final_plan_time.txt", 'w')
     final_plan.sort(key=take_time)
+    plan_duration_sum = 0
     for action in final_plan:
         if "_start" in action[2][1]:
             action_name = action[2][1].split("_start")[0] + action[2][1].split("_start")[1]
@@ -369,7 +371,13 @@ if __name__ == '__main__':
                         time_window = elem
                         break
 
-                time_window_value = time_window + action_init - plan_makespan
+                plan_duration_sum = plan_duration_sum + float(action[2][0])
+                # time_window_value = time_window - action_init - plan_makespan
+                time_window_value = time_window - (plan_makespan - plan_duration_sum)
+
+                # GMV_final_plan_file.write(
+                #    str(time_window) + "- (" + str(plan_makespan) + " - " + str(plan_duration_sum) + ")\n")
+
 
                 GMV_final_plan_file.write(
                     str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "{:.3f}".format(time_window_value) + ", " +
