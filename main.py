@@ -371,9 +371,9 @@ if __name__ == '__main__':
                         time_window = elem
                         break
 
-                plan_duration_sum = plan_duration_sum + float(action[2][0])
                 # time_window_value = time_window - action_init - plan_makespan
                 time_window_value = time_window - (plan_makespan - plan_duration_sum)
+                plan_duration_sum = plan_duration_sum + float(action[2][0])
 
                 # GMV_final_plan_file.write(
                 #    str(time_window) + "- (" + str(plan_makespan) + " - " + str(plan_duration_sum) + ")\n")
