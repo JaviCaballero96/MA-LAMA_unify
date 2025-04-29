@@ -69,7 +69,6 @@ def const_fase_create_plan():
 
             else:
                 print(line)
-                print("awdaskdallsakdmal")
                 if "Total-time Cost" in line:
                     total_time_metric = True
                 if line_number == 0:
@@ -331,9 +330,29 @@ if __name__ == '__main__':
     plan_cost = 0
     last_action_init = 0
     last_action_dur = 0
+    # Calculate plan duration and read min_valid_time to calculate max application window for all actions
+    plan_makespan = 0
+    for action in final_plan:
+        if "_start" in action[2][1]:
+            plan_makespan = plan_makespan + float(action[2][0])
+    min_valid_time_windows = []
+    inf = False
+    try:
+        f = open("unify_info.txt", "r")
+    except:
+        inf = True
+        print("No negative time windows are present")
+    if not inf:
+        lines = [line.rstrip() for line in f]
+        assert(lines[0] == "Unify Data")
+        for window in lines[1:]:
+            min_valid_time_windows.append(float(window))
+        print(min_valid_time_windows)
+
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
-    GMV_final_plan_file = open(dir_path + "GMV_final_plan.txt", 'w')
+    GMV_final_plan_file = open(dir_path + "final_plan_time.txt", 'w')
     final_plan.sort(key=take_time)
+    plan_duration_sum = 0
     for action in final_plan:
         if "_start" in action[2][1]:
             action_name = action[2][1].split("_start")[0] + action[2][1].split("_start")[1]
@@ -342,9 +361,31 @@ if __name__ == '__main__':
             plan_cost = plan_cost + float(action[2][2])
             final_plan_file.write(
                 "{:.3f}".format(action_init) + " " + "({:.3f})".format(action_duration) + " " + str(action_name) + "\n")
-            GMV_final_plan_file.write(
-                str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "{:.3f}".format(action_init) + ", " +
-                "{:.3f}".format(action_duration) + "]" + "\n")
+
+            # Calculate the end time window
+
+            if min_valid_time_windows:
+                time_window = min_valid_time_windows[-1]
+                for elem in min_valid_time_windows:
+                    if action_init <= elem:
+                        time_window = elem
+                        break
+
+                # time_window_value = time_window - action_init - plan_makespan
+                time_window_value = time_window - (plan_makespan - plan_duration_sum)
+                plan_duration_sum = plan_duration_sum + float(action[2][0])
+
+                # GMV_final_plan_file.write(
+                #    str(time_window) + "- (" + str(plan_makespan) + " - " + str(plan_duration_sum) + ")\n")
+
+
+                GMV_final_plan_file.write(
+                    str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "{:.3f}".format(time_window_value) + ", " +
+                    "{:.3f}".format(action_duration) + "]" + "\n")
+            else:
+                GMV_final_plan_file.write(
+                    str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "inf" + ", " +
+                    "{:.3f}".format(action_duration) + "]" + "\n")
             last_action_init = action_init
             last_action_dur = action_duration
         elif "_end" in action[2][1]:
