@@ -161,10 +161,10 @@ def const_fase_create_plan():
 
         iterations = iterations + 1
 
-    return local_plan, total_time_metric
+    return local_plan, total_time_metric, agent_number
 
 
-def coop_fase_create_plan(curr_time_followup):
+def coop_fase_create_plan(curr_time_followupn):
     # Create final plan
     local_plan = []
     local_path = os.getcwd() + "/"
@@ -309,7 +309,7 @@ def general_fase_create_plan(curr_time_followup):
 if __name__ == '__main__':
 
     curr_time = 0
-    plan_step_const, total_time_metric = const_fase_create_plan()
+    plan_step_const, total_time_metric, n_agents = const_fase_create_plan()
     if plan_step_const:
         curr_time = float(plan_step_const[-1][2][3]) + float(plan_step_const[-1][2][0])
         print("End coordination phase time: " + str(curr_time))
@@ -331,10 +331,10 @@ if __name__ == '__main__':
     last_action_init = 0
     last_action_dur = 0
     # Calculate plan duration and read min_valid_time to calculate max application window for all actions
-    plan_makespan = 0
+    plan_makespan = [0] * n_agents
     for action in final_plan:
         if "_start" in action[2][1]:
-            plan_makespan = plan_makespan + float(action[2][0])
+            plan_makespan[action[1]] = plan_makespan[action[1]] + float(action[2][0])
     min_valid_time_windows = []
     inf = False
     try:
@@ -352,8 +352,10 @@ if __name__ == '__main__':
     final_plan_file = open(dir_path + "final_plan.txt", 'w')
     GMV_final_plan_file = open(dir_path + "final_plan_time.txt", 'w')
     final_plan.sort(key=take_time)
-    plan_duration_sum = 0
+    plan_duration_sum = [0] * n_agents
+
     for action in final_plan:
+        print(action)
         if "_start" in action[2][1]:
             action_name = action[2][1].split("_start")[0] + action[2][1].split("_start")[1]
             action_init = action[2][3]
@@ -365,19 +367,32 @@ if __name__ == '__main__':
             # Calculate the end time window
 
             if min_valid_time_windows:
+                found_i = -1
                 time_window = min_valid_time_windows[-1]
+                index = 0
                 for elem in min_valid_time_windows:
                     if action_init <= elem:
                         time_window = elem
+                        found_i = index
                         break
+                    index = index + 1
 
-                # time_window_value = time_window - action_init - plan_makespan
-                time_window_value = time_window - (plan_makespan - plan_duration_sum)
-                plan_duration_sum = plan_duration_sum + float(action[2][0])
+                # Calculate real applicable makespan
+                if time_window == min_valid_time_windows[-1]:
+                    real_plan_makespan = plan_makespan[action[1]]
+                else:
+                    real_plan_makespan = 0
+                    for act in final_plan:
+                        if "_start" in act[2][1]:
+                            if act[1] == action[1] and float(act[2][3]) + 3 < min_valid_time_windows[found_i]:
+                                real_plan_makespan = real_plan_makespan + float(act[2][0])
+
+                time_window_value = time_window - (real_plan_makespan - plan_duration_sum[action[1]])
 
                 # GMV_final_plan_file.write(
-                #    str(time_window) + "- (" + str(plan_makespan) + " - " + str(plan_duration_sum) + ")\n")
+                #     str(time_window) + " - (" + str(real_plan_makespan) + " - " + str(plan_duration_sum[action[1]]) + ")\n")
 
+                plan_duration_sum[action[1]] = plan_duration_sum[action[1]] + float(action[2][0])
 
                 GMV_final_plan_file.write(
                     str(action_name) + " [" + "{:.3f}".format(action_init) + ", " + "{:.3f}".format(time_window_value) + ", " +
