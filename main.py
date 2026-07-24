@@ -6,15 +6,6 @@ def take_time(elem):
     return elem[2][3]
 
 
-def reinitialise_internal_clock(plan, agent_counter, tick):
-    if agent_counter < (len(plan) - 1):
-        extra_time = tick - plan[agent_counter][3]
-
-        if extra_time != 0:
-            for acti in plan[agent_counter + 1:]:
-                acti[3] = acti[3] + extra_time
-
-
 def const_fase_create_plan():
     local_path = os.getcwd() + "/step_0/"
     count = -1
@@ -90,7 +81,6 @@ def const_fase_create_plan():
     agent_plan_finished = [False] * agent_number
     agent_counter = [0] * agent_number
     tick = 0
-    agent_tick = [0] * agent_number
 
     # we will only finish this when all plans have finished
     iterations = 0
@@ -137,14 +127,11 @@ def const_fase_create_plan():
 
                 if valid_candidate:
                     added_action = True
-                    # include an action
-                    reinitialise_internal_clock(read_plans[action_to_include[1]], agent_counter[action_to_include[1]],
-                                              tick)
+                    # Keep the action's own precise time. The tick is only
+                    # a cursor for finding the next action chronologically,
+                    # not a value to round the recorded time to.
                     local_plan.append(action_to_include)
                     agent_counter[action_to_include[1]] = action_to_include[0] + 1
-                    agent_tick[action_to_include[1]] = action_to_include[2][3]
-                    agent_tick[action_to_include[1]] = tick
-                    action_to_include[2][3] = agent_tick[action_to_include[1]]
 
                     if agent_counter[action_to_include[1]] >= len(read_plans[action_to_include[1]]):
                         agent_plan_finished[action_to_include[1]] = True
